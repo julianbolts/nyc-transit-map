@@ -1,21 +1,22 @@
 import raw from '@/data/transit.json';
-import GtfsRealtimeBindings from 'gtfs-realtime-bindings';
+import {cachedFeed} from '@/lib/feed-cache';
 type StopTime=[string,number,number,number];
 type Trip=[string,string,string,string,string,number,number];
 type Data={sources:Record<string,{downloaded:string}>;stops:Record<string,[string,number,number]>;routes:Record<string,[string,string,string]>;trips:Trip[];patterns:StopTime[][];calendars:Record<string,[string,string,number[]]>;exceptions:Record<string,Record<string,number>>};
 const db=raw as unknown as Data;
 const urls={subway:['gtfs','gtfs-ace','gtfs-bdfm','gtfs-g','gtfs-jz','gtfs-nqrw','gtfs-l','gtfs-si'].map(s=>'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2F'+s),ferry:['https://nycferry.connexionz.net/rtt/public/utility/gtfsrealtime.aspx/tripupdate','https://nycferry.connexionz.net/rtt/public/utility/gtfsrealtime.aspx/vehicleposition']};
-let cached:{time:number;value:unknown;key:string}|undefined;
-async function feed(url:string){const r=await fetch(url,{signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('Feed unavailable');return GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(new Uint8Array(await r.arrayBuffer()));}
-export async function GET(request:Request){
- const params=new URL(request.url).searchParams;const live={subway:params.get('subway')==='live',ferry:params.get('ferry')==='live'};const key=JSON.stringify(live);if(cached&&cached.key===key&&Date.now()-cached.time<20000)return Response.json(cached.value);
+const resultCache=new Map<string,{time:number;value:unknown}>();
+const pendingResults=new Map<string,Promise<Response>>();
+export async function GET(request:Request){const key=new URL(request.url).searchParams.toString();const existing=pendingResults.get(key);if(existing)return (await existing).clone();const task=buildResponse(request);pendingResults.set(key,task);try{return (await task).clone();}finally{pendingResults.delete(key);}}
+async function buildResponse(request:Request){
+ const params=new URL(request.url).searchParams;const live={subway:params.get('subway')==='live',ferry:params.get('ferry')==='live'};const key=JSON.stringify(live);const cached=resultCache.get(key);if(cached&&Date.now()-cached.time<30000)return Response.json(cached.value,{headers:{'Cache-Control':'public, max-age=30'}});
  const now=Date.now()/1000;const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
  const sec=+parts.hour*3600+ +parts.minute*60+ +parts.second;const midnight=now-sec;const today=`${parts.year}${parts.month}${parts.day}`;const date=new Date(`${parts.year}-${parts.month}-${parts.day}T12:00:00Z`);const day=(date.getUTCDay()+6)%7;
  const yesterdayDate=new Date(date.getTime()-86400000);const yesterday=yesterdayDate.toISOString().slice(0,10).replaceAll('-','');
  const active=(service:string,d:string,dow:number)=>{const ex=db.exceptions[service]?.[d];if(ex)return ex===1;const c=db.calendars[service];return !!c&&d>=c[0]&&d<=c[1]&&c[2][dow]===1;};
  const status:Record<string,string>={subway:'Scheduled',ferry:'Scheduled'};
  const updates=new Map<string,any>();const positions=new Map<string,any>();
- await Promise.all((['subway','ferry'] as const).map(async mode=>{if(!live[mode])return;const results=await Promise.allSettled(urls[mode].map(feed));let success=0;for(const r of results){if(r.status==='rejected')continue;const age=now-Number(r.value.header.timestamp);if(!Number.isFinite(age)||age>180)continue;success++;for(const e of r.value.entity){if(e.tripUpdate?.trip?.tripId)updates.set(mode+':'+e.tripUpdate.trip.tripId,e.tripUpdate);if(e.vehicle?.trip?.tripId&&e.vehicle.position)positions.set(mode+':'+e.vehicle.trip.tripId,e.vehicle);}}status[mode]=success===0?'Live unavailable · using schedule':success<results.length?'Partial live data · schedule fallback':mode==='subway'?'Live arrivals · estimated positions':'Live ferry data';}));
+ await Promise.all((['subway','ferry'] as const).map(async mode=>{if(!live[mode])return;const results=await Promise.allSettled(urls[mode].map(url=>cachedFeed(url,mode==='subway'?30:60)));let success=0;for(const r of results){if(r.status==='rejected')continue;const age=now-Number(r.value.header.timestamp);if(!Number.isFinite(age)||age>180)continue;success++;for(const e of r.value.entity){if(e.tripUpdate?.trip?.tripId)updates.set(mode+':'+e.tripUpdate.trip.tripId,e.tripUpdate);if(e.vehicle?.trip?.tripId&&e.vehicle.position)positions.set(mode+':'+e.vehicle.trip.tripId,e.vehicle);}}status[mode]=success===0?'Live unavailable · using schedule':success<results.length?'Partial live data · schedule fallback':mode==='subway'?'Live arrivals · estimated positions':'Live ferry data';}));
  const vehicles=[];
  for(const t of db.trips){const [id,route,service,headsign,shape,pattern,start]=t;const st=db.patterns[pattern];const mode=db.routes[route][2];
   for(const offset of [0,-1]){const base=midnight+offset*86400;if(!active(service,offset===0?today:yesterday,offset===0?day:(day+6)%7))continue;
@@ -29,5 +30,5 @@ export async function GET(request:Request){
    vehicles.push({id:id+':'+offset,route:db.routes[route][0],headsign:headsign||stops[stops.length-1].name,mode,shape,stops,live:isLive||!!gps,gps});
   }
  }
- const result={vehicles,status,serverTime:now,sources:db.sources,date:today};cached={time:Date.now(),value:result,key};return Response.json(result,{headers:{'Cache-Control':'public, max-age=15'}});
+ const result={vehicles,status,serverTime:now,sources:db.sources,date:today};resultCache.set(key,{time:Date.now(),value:result});return Response.json(result,{headers:{'Cache-Control':'public, max-age=30'}});
 }

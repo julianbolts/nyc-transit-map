@@ -19,3 +19,17 @@ A quiet full-screen NYC subway and ferry map. Pan and zoom are locked by default
 `node --experimental-strip-types scripts/validate-water.mjs` validates and clips ferry geometry against z12 CARTO/OpenStreetMap water tiles in `/tmp/water-tiles`. Tiles use filenames `X-Y.mvt` (gzip). Download tiles covering the map region before rerunning this check. It is an authoring-time check, not a runtime network dependency.
 
 MapLibre draws the main map; a Canvas/Leaflet renderer uses the same vector tiles on browsers without WebGL2. Data attribution remains visible. Icons are Lucide TrainFront, Ship and Settings.
+
+## Loading and cache policy (September 24 fix)
+
+The production blank map was caused by a missing MapLibre ESM worker asset (404), not an observed agency rate limit. Worker and shared-module assets are explicitly shipped under the versioned `/vendor/maplibre-6.10.0/` directory. Lightweight same-origin map backdrops render before JavaScript or transit data. Map, geometry and schedule requests run independently, with an 8-second map fallback and 12-second data request timeout.
+
+The default mode fetches `/api/schedule` once for the current New York day, persists the result in the browser Cache API and selects/animates trips locally. Concurrent requests share a promise. The server also caches each day's compact response in memory and the Cloudflare edge cache. The cache expires at local midnight (at most 24 hours); it is distinct from the publication date of the bundled agency timetable. It does not automatically reimport newer upstream schedule files.
+
+Live feeds are fetched server-side only when enabled, cached by source URL across visitors at each Cloudflare edge location, and deduplicated within each worker isolate. Cache TTLs are 30 seconds for MTA and 60 seconds for NYC Ferry. Failed requests back off for 60 seconds; HTTP Retry-After is respected (30 seconds–1 hour). Stale live timestamps still trigger the labeled schedule fallback.
+
+Suggested upstream schedule revalidation: daily for regular MTA GTFS (officially updated a few times per year), hourly if adopting MTA supplemented GTFS (officially updated hourly), daily for NYC Ferry GTFS (no published cadence found). Use Last-Modified/ETag during an import refresh. Geometry and style cache for 30 days; versioned worker assets cache for one year.
+
+Sources: https://www.mta.info/developers ; https://www.mta.info/document/134521 (feed generated every 30 seconds); https://www.ferry.nyc/developer-tools/ (publishes endpoints, no update frequency).
+
+`node scripts/check-loading-cache.mjs` verifies request coalescing, cache hits, expiration and presence of the packaged worker/backdrop assets.
