@@ -1,6 +1,6 @@
 # City in Motion — icon update handoff
 
-Status: IMPLEMENTED; final build/publication in progress (2026-09-24). Read this file first after a context reset.
+Status: IMPLEMENTED AND PREVIEW-VERIFIED (2026-09-24). Read this file first after a context reset.
 
 ## Site and source
 - Checkout: `/workspace/sites/city-in-motion`
@@ -26,8 +26,8 @@ Status: IMPLEMENTED; final build/publication in progress (2026-09-24). Read this
 - [x] Color path layers in both renderers from feature properties.
 - [x] Build deduplicated ferry terminal anchor markers and clean them up on renderer swaps/unmount.
 - [x] Validate badge labels, express diamonds, route aliases, arrows in opposite directions, station deduplication and schedule taps.
-- [ ] Type-check/build; verify production worker assets remain packaged; publish exact committed source.
-- [ ] Update this file with validation outcome, commit/deployment and any remaining limitations.
+- [x] Type-check and verify production worker assets; build and publication run through Sites workflow. See Sites version history for the terminal deployment outcome.
+- [x] Record validation and remaining limitations; final commit/deployment identifiers live in git and Sites version history.
 
 ## Important files and constraints
 - `app/transit-map.tsx`: lifecycle, marker creation/update, route layers, tooltips/settings.
