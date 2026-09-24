@@ -24,3 +24,5 @@
 .ferry-terminal>span{display:grid;place-items:center;width:17px;height:17px;background:var(--terminal-color,#008EB8);border-radius:50%;color:white;border:1px solid #ffffff60}
 .ferry-terminal svg{height:12px;width:12px}.maplibregl-marker:has(.badge-shape){z-index:5}.maplibregl-marker.ferry-terminal{z-index:1}
 .ferry-terminal{background:#008FD0;padding:2px;box-shadow:0 0 0 1px #b5e8ff99}.ferry-terminal>span{background:#008FD0;border:0}
+
+.station-tooltip{padding:16px 20px;font:500 15px/1.4 Arial,Helvetica,sans-serif;color:#26322f;max-width:310px}.ferry-terminal{border:0;cursor:pointer}
