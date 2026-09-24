@@ -9,7 +9,7 @@
 .vehicle{width:22px;height:22px;padding:3px;border-radius:5px;box-shadow:0 1px 3px #0004;border-color:#dce7e244;background:#d0dbd5}.vehicle svg{width:15px;height:15px}.vehicle.ferry{width:25px;height:25px;padding:4px;background:#aacbd3}.vehicle-holder{display:flex;align-items:center;justify-content:center}.vehicle:hover,.vehicle.selected{box-shadow:0 0 0 3px #edf5ee30,0 2px 8px #0007}.park-label{font-size:10px!important}
 .map-backdrop{position:fixed;inset:0;background:#30383b;pointer-events:none}.map-backdrop img{height:100%;width:100%;object-fit:cover}.map{transition:opacity .25s}
 /* Route badges: only the pointer rotates; labels remain upright. */
-.vehicle,.vehicle.ferry{width:30px;height:30px;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:var(--route-text,#fff);position:relative;overflow:visible;isolation:isolate}
+.vehicle,.vehicle.ferry{width:30px;height:30px;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:var(--route-text,#fff);overflow:visible;isolation:isolate}
 .vehicle .badge-shape{position:absolute;inset:2px;background:var(--route-color,#808183);border:1px solid #ffffffe6;border-radius:50%;box-shadow:0 1px 3px #0008;z-index:1}
 .vehicle.express .badge-shape{inset:5px;border-radius:0;transform:rotate(45deg)}
 .vehicle .badge-label{position:absolute;inset:0;display:grid;place-items:center;font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:16px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.5px;z-index:2}
@@ -26,3 +26,7 @@
 .ferry-terminal{background:#008FD0;padding:2px;box-shadow:0 0 0 1px #b5e8ff99}.ferry-terminal>span{background:#008FD0;border:0}
 
 .station-tooltip{padding:16px 20px;font:500 15px/1.4 Arial,Helvetica,sans-serif;color:#26322f;max-width:310px}.ferry-terminal{border:0;cursor:pointer}
+
+/* MapLibre positions the badge root absolutely. Leaflet positions a wrapper.
+   Never make the shared marker root relative: it adds DOM-flow offsets. */
+.vehicle-holder>.vehicle{position:relative}
