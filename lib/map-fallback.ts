@@ -19,13 +19,13 @@ export class Map{
  on(event:string,fn:any){if(event==='load'){setTimeout(fn,0);return this;}this.l.on(event,fn);return this;}
  getBounds(){const b=this.l.getBounds();return {contains:(p:Point)=>b.contains(latLng(p))};}
  addSource(id:string,o:any){this.sources[id]=o.data;}
- addLayer(o:any){const data=this.sources[o.source];const mode=o.id.includes('ferry')?'ferry':'subway';const l=L.geoJSON(data,{filter:f=>f.properties?.mode===mode,style:{color:mode==='ferry'?'#709097':'#080f12',weight:mode==='ferry'?1:1.35,opacity:mode==='ferry'?.3:.8,dashArray:mode==='ferry'?'2 6':undefined},interactive:false}).addTo(this.l);this.layers.push(l);}
+ addLayer(o:any){const data=this.sources[o.source];if(o.type==='circle'){const layer=L.geoJSON(data,{pointToLayer:(_feature,latlng)=>L.circleMarker(latlng,{radius:2.8,color:'#101416',weight:1.3,fillColor:'#fff',fillOpacity:1,interactive:false})}).addTo(this.l);this.layers.push(layer);return;}const mode=o.id.includes('ferry')?'ferry':'subway';const l=L.geoJSON(data,{filter:f=>f.properties?.mode===mode,style:f=>({color:f?.properties?.color??'#4b5354',weight:mode==='ferry'?1.3:2.2,opacity:mode==='ferry'?.85:.95,dashArray:mode==='ferry'?'2 6':undefined}),interactive:false}).addTo(this.l);this.layers.push(l);}
  remove(){this.l.remove();}
  get dragPan(){return this.l.dragging;}get scrollZoom(){return this.l.scrollWheelZoom;}get doubleClickZoom(){return this.l.doubleClickZoom;}get keyboard(){return this.l.keyboard;}get touchZoomRotate(){return {enable:()=>this.l.touchZoom.enable(),disable:()=>this.l.touchZoom.disable(),disableRotation:()=>{}};}
 }
 export class Marker{
  l:L.Marker;el:HTMLElement;
- constructor(o:any){this.el=o.element;this.l=L.marker([0,0],{icon:L.divIcon({html:this.el,className:'vehicle-holder',iconSize:[29,29],iconAnchor:[14.5,14.5]}),keyboard:false});}
+ constructor(o:any){this.el=o.element;this.l=L.marker([0,0],{icon:L.divIcon({html:this.el,className:'vehicle-holder',iconSize:[29,29],iconAnchor:[14.5,14.5]}),keyboard:false,zIndexOffset:this.el.classList.contains('ferry-terminal')?-10000:10000});}
  setLngLat(p:Point|{lng:number;lat:number}){this.l.setLatLng(Array.isArray(p)?latLng(p):[p.lat,p.lng]);return this;}
  getLngLat(){return this.l.getLatLng();}getElement(){return this.el;}addTo(m:Map){this.l.addTo(m.l);return this;}remove(){this.l.remove();}
 }

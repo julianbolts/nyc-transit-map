@@ -8,3 +8,19 @@
 .leaflet-container{background:#30383b!important}.leaflet-control-attribution{background:#202527aa!important;color:#81908b!important;font-size:9px!important}.leaflet-control-attribution a{color:inherit!important}.vehicle-holder{background:none!important;border:0!important}.park-label{font:10px/1.5 Arial,sans-serif;letter-spacing:1.4px;text-align:center;color:#89a294;pointer-events:none}.leaflet-popup-content-wrapper{background:#e4e9e7!important;padding:0!important;border-radius:14px!important;box-shadow:0 12px 55px #0005!important;overflow:hidden}.leaflet-popup-content{margin:0!important;width:310px!important}.leaflet-popup-tip{background:#e4e9e7!important}.leaflet-popup-content p{margin:0!important}.leaflet-container a{color:inherit}.leaflet-popup{margin-bottom:0!important}
 .vehicle{width:22px;height:22px;padding:3px;border-radius:5px;box-shadow:0 1px 3px #0004;border-color:#dce7e244;background:#d0dbd5}.vehicle svg{width:15px;height:15px}.vehicle.ferry{width:25px;height:25px;padding:4px;background:#aacbd3}.vehicle-holder{display:flex;align-items:center;justify-content:center}.vehicle:hover,.vehicle.selected{box-shadow:0 0 0 3px #edf5ee30,0 2px 8px #0007}.park-label{font-size:10px!important}
 .map-backdrop{position:fixed;inset:0;background:#30383b;pointer-events:none}.map-backdrop img{height:100%;width:100%;object-fit:cover}.map{transition:opacity .25s}
+/* Route badges: only the pointer rotates; labels remain upright. */
+.vehicle,.vehicle.ferry{width:30px;height:30px;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:var(--route-text,#fff);position:relative;overflow:visible;isolation:isolate}
+.vehicle .badge-shape{position:absolute;inset:2px;background:var(--route-color,#808183);border:1px solid #ffffffe6;border-radius:50%;box-shadow:0 1px 3px #0008;z-index:1}
+.vehicle.express .badge-shape{inset:5px;border-radius:0;transform:rotate(45deg)}
+.vehicle .badge-label{position:absolute;inset:0;display:grid;place-items:center;font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:16px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.5px;z-index:2}
+.vehicle[title^="SIR"] .badge-label{font-size:10px;letter-spacing:-.6px}
+.vehicle .badge-label svg{height:17px;width:17px;stroke:currentColor}
+.vehicle .direction{position:absolute;inset:0;transform:rotate(var(--heading,0deg));transform-origin:center;z-index:0;pointer-events:none}
+.vehicle .direction svg{position:absolute;width:26px;height:12px;left:2px;top:-7px;overflow:visible}
+.vehicle .direction path{fill:var(--route-color);stroke:#fff;stroke-width:.9;stroke-linejoin:round}
+.vehicle:hover,.vehicle.selected{background:transparent;box-shadow:none}
+.vehicle:hover .badge-shape,.vehicle.selected .badge-shape{box-shadow:0 0 0 3px #ffffff35,0 2px 7px #0009}
+.ferry-terminal{height:21px;width:21px;border-radius:50%;padding:2px;box-shadow:0 0 0 1px #172327aa;display:grid;place-items:center;z-index:0}
+.ferry-terminal>span{display:grid;place-items:center;width:17px;height:17px;background:var(--terminal-color,#008EB8);border-radius:50%;color:white;border:1px solid #ffffff60}
+.ferry-terminal svg{height:12px;width:12px}.maplibregl-marker:has(.badge-shape){z-index:5}.maplibregl-marker.ferry-terminal{z-index:1}
+.ferry-terminal{background:#008FD0;padding:2px;box-shadow:0 0 0 1px #b5e8ff99}.ferry-terminal>span{background:#008FD0;border:0}
