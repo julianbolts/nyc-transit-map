@@ -2,6 +2,8 @@
 
 A quiet full-screen NYC subway and ferry map. Pan and zoom are locked by default. Gear settings enable navigation and independent live feeds. Selecting a vehicle opens its journey timeline.
 
+The [default map view guide](docs/MAP-VIEW.md) explains the bounding box, zoom, padding, and how to change the initial and reset views.
+
 ## Data and animation
 
 - `scripts/prepare-transit.py` imports official MTA regular subway GTFS and NYC Ferry GTFS downloaded into `/tmp/subway.zip` and `/tmp/ferry.zip`. Calendars and holiday exceptions are respected; trips after midnight retain their service date.
