@@ -10,7 +10,7 @@ import {Switch} from '@/components/ui/switch';
 import {Popover,PopoverTrigger,PopoverContent} from '@/components/ui/popover';
 import type {Map as GLMap,Marker,Popup} from 'maplibre-gl';
 import {decodeNetwork,prepare,pathDistance,travelDistance,along,position,type Point,type Vehicle,type Prepared} from '@/lib/transit-geometry';
-const BOUNDS:[Point,Point]=[[-74.027,40.652],[-73.944,40.804]];
+const BOUNDS:[Point,Point]=[[-74.02412,40.687087],[-73.923274,40.768314]];
 const escape=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const formatTime=(time:number)=>new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit',hour12:true}).format(new Date(time*1000)).replace(/\s[AP]M/,'');
 function scheduleHTML(v:Vehicle,now:number){let next=v.stops.findIndex(s=>s.departure>now);if(next<0)next=v.stops.length-1;return `<section class="schedule" aria-label="Journey schedule"><header class="schedule-head"><span class="eyebrow">${v.mode==='ferry'?'NYC FERRY':'SUBWAY'} · ${escape(v.route)}</span><button class="close" aria-label="Close schedule">×</button><h2>To ${escape(v.headsign)}</h2><p>${v.live?(v.gps?'Live GPS · matched to ferry route':'Live arrivals · estimated position'):'Scheduled journey · estimated position'}</p></header><div class="stops">${v.stops.map((s,i)=>`<div class="stop ${i<next?'past':i===next?'next':''}"><time>${formatTime(s.arrival)}</time><span class="pin"></span><div>${escape(s.name)}${i===next?'<small>'+ (now>=s.arrival?'At station':'Approaching')+'</small>':''}</div></div>`).join('')}</div></section>`;}
