@@ -2,11 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "City in Motion",
-  description: "New York in motion. Scheduled and live subway and ferry journeys on a quiet map.",
-  other: {
-    "codex-preview": "development",
-  },
+  title: "NYC Transit Map",
+  description: "A map showing the positions of subways and ferries in NYC.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
