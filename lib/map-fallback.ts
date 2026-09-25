@@ -1,13 +1,14 @@
 import L from 'leaflet';
 import {VectorTile} from '@mapbox/vector-tile';
 import {PbfReader as Pbf} from 'pbf';
+import {mapPalette} from '@/lib/map-palette';
 type Point=[number,number];
 const latLng=(p:Point)=>L.latLng(p[1],p[0]);
 class InkTiles extends L.GridLayer{
- createTile(coords:L.Coords,done:L.DoneCallback){const canvas=document.createElement('canvas');canvas.width=canvas.height=512;canvas.style.width=canvas.style.height='256px';const ctx=canvas.getContext('2d')!;ctx.fillStyle='#30383b';ctx.fillRect(0,0,512,512);
+ createTile(coords:L.Coords,done:L.DoneCallback){const canvas=document.createElement('canvas');canvas.width=canvas.height=512;canvas.style.width=canvas.style.height='256px';const ctx=canvas.getContext('2d')!;ctx.fillStyle=mapPalette.background;ctx.fillRect(0,0,512,512);
  fetch(`https://tiles.basemaps.cartocdn.com/vectortiles/carto.streets/v1/${coords.z}/${coords.x}/${coords.y}.mvt`).then(r=>{if(!r.ok)throw Error();return r.arrayBuffer();}).then(b=>{const tile=new VectorTile(new Pbf(new Uint8Array(b)));const draw=(name:string,color:string,stroke=false,width=1)=>{const layer=tile.layers[name];if(!layer)return;for(let i=0;i<layer.length;i++){const f=layer.feature(i);const geometry=f.loadGeometry();const k=512/layer.extent;ctx.beginPath();for(const ring of geometry){ring.forEach((p,j)=>j===0?ctx.moveTo(p.x*k,p.y*k):ctx.lineTo(p.x*k,p.y*k));if(f.type===3)ctx.closePath();}if(stroke){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}else{ctx.fillStyle=color;ctx.fill('evenodd');}}};
- draw('landcover','#2b3833');draw('park','#293b35');draw('water','#1d2529');draw('waterway','#1d2529',true,2);draw('building','#354043');draw('boundary','#202a2c',true,.8);draw('transportation','#121b1e',true,1.2);
- const labels=tile.layers.place;if(labels&&coords.z>=10){ctx.font='500 21px Arial';ctx.fillStyle='#81908e';ctx.textAlign='center';for(let i=0;i<labels.length;i++){const f=labels.feature(i);if(!['suburb','neighbourhood','quarter','borough'].includes(String(f.properties.class)))continue;const p=f.loadGeometry()[0]?.[0];if(!p)continue;const name=String(f.properties['name:en']||f.properties.name||'');ctx.fillText(name,p.x*512/labels.extent,p.y*512/labels.extent);}}done(undefined,canvas);
+ draw('landcover',mapPalette.landcover);draw('park',mapPalette.park);draw('water',mapPalette.water);draw('waterway',mapPalette.waterway,true,2);draw('building',mapPalette.building);draw('boundary',mapPalette.boundary,true,.8);draw('transportation',mapPalette.road,true,1.2);
+ const labels=tile.layers.place;if(labels&&coords.z>=10){ctx.font='500 21px Arial';ctx.fillStyle=mapPalette.label;ctx.textAlign='center';for(let i=0;i<labels.length;i++){const f=labels.feature(i);if(!['suburb','neighbourhood','quarter','borough'].includes(String(f.properties.class)))continue;const p=f.loadGeometry()[0]?.[0];if(!p)continue;const name=String(f.properties['name:en']||f.properties.name||'');ctx.fillText(name,p.x*512/labels.extent,p.y*512/labels.extent);}}done(undefined,canvas);
  }).catch(()=>done(undefined,canvas));return canvas;}
 }
 export class Map{
