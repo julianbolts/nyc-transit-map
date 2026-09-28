@@ -29,6 +29,7 @@ export function prepare(v:Vehicle,shapes:Record<string,Point[]>):Prepared{
  return {...v,path,dist:geometry.dist,...journey};
 }
 export function travelDistance(v:Prepared,now:number){if(v.gps)return pathDistance(v,v.gps);let i=v.stops.findIndex(s=>s.arrival>now);if(i<0)i=v.stops.length-1;if(i===0)return v.stopDist[0];const a=v.stops[i-1],b=v.stops[i],p=Math.max(0,Math.min(1,(now-a.departure)/Math.max(1,b.arrival-a.departure)));return v.stopDist[i-1]+(v.stopDist[i]-v.stopDist[i-1])*p;}
+export function jumpCutDistance(v:Prepared){const legs=v.stopDist.slice(1).map((end,i)=>end-v.stopDist[i]).filter(length=>length>0);return legs.length?legs.reduce((total,length)=>total+length,0)/legs.length:Infinity;}
 export function along(v:Prepared,d:number):Point{const safe=waterBounds.get(v.shape);if(safe)d=Math.max(safe[0],Math.min(safe[1],d));const segment=v.segments.find(s=>d<=s.end)??v.segments[v.segments.length-1];return sample(segment,d-segment.start);}
 export function position(v:Prepared,now:number):Point{return along(v,travelDistance(v,now));}
 export type Network={edges:{from:string;to:string;coordinates:Point[]}[];shapes:Record<string,number[]>;waterBounds?:Record<string,[number,number]>};

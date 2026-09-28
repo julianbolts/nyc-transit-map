@@ -30,3 +30,4 @@
 /* MapLibre positions the badge root absolutely. Leaflet positions a wrapper.
    Never make the shared marker root relative: it adds DOM-flow offsets. */
 .vehicle-holder>.vehicle{position:relative}
+.vehicle.jump-cut,.vehicle-holder:has(.jump-cut){transition:none!important}
