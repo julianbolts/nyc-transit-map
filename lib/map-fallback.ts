@@ -12,8 +12,8 @@ class InkTiles extends L.GridLayer{
  }).catch(()=>done(undefined,canvas));return canvas;}
 }
 export class Map{
- l:L.Map;sources:Record<string,any>={};layers:L.Layer[]=[];
- constructor(o:any){this.l=L.map(o.container,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,touchZoom:false,keyboard:false,zoomSnap:.1,zoomAnimation:true}).setView(latLng(o.center),o.zoom);new InkTiles({maxZoom:19,minZoom:3,keepBuffer:2}).addTo(this.l);L.control.attribution({prefix:false}).addAttribution('© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>').addTo(this.l);
+ l:L.Map;tiles:InkTiles;sources:Record<string,any>={};layers:L.Layer[]=[];
+ constructor(o:any){this.l=L.map(o.container,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,touchZoom:false,keyboard:false,zoomSnap:.1,zoomAnimation:true}).setView(latLng(o.center),o.zoom);this.tiles=new InkTiles({maxZoom:19,minZoom:3,keepBuffer:2}).addTo(this.l);L.control.attribution({prefix:false}).addAttribution('© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>').addTo(this.l);
  L.marker([40.7812,-73.9665],{interactive:false,keyboard:false,icon:L.divIcon({className:'park-label',html:'CENTRAL<br/>PARK',iconSize:[70,30]})}).addTo(this.l);L.marker([40.6605,-73.969],{interactive:false,keyboard:false,icon:L.divIcon({className:'park-label',html:'PROSPECT<br/>PARK',iconSize:[70,30]})}).addTo(this.l);
  }
  fitBounds(b:[Point,Point],o:any){const padding=typeof o.padding==='number'?[o.padding,o.padding]:[o.padding.left,o.padding.top];this.l.fitBounds(L.latLngBounds(latLng(b[0]),latLng(b[1])),{padding:L.point(padding[0],padding[1]),animate:!!o.duration});return this;}
@@ -23,6 +23,7 @@ export class Map{
  getCenter(){const center=this.l.getCenter();return {lng:center.lng,lat:center.lat};}
  getZoom(){return this.l.getZoom();}
  getBounds(){const b=this.l.getBounds();return {contains:(p:Point)=>b.contains(latLng(p))};}
+ refreshTiles(){this.tiles.redraw();}
  addSource(id:string,o:any){this.sources[id]=o.data;}
  addLayer(o:any){const data=this.sources[o.source];if(o.type==='circle'){const layer=L.geoJSON(data,{pointToLayer:(_feature,latlng)=>L.circleMarker(latlng,{radius:2.8,color:'#101416',weight:1.3,fillColor:'#fff',fillOpacity:1,interactive:false})}).addTo(this.l);this.layers.push(layer);return;}const mode=o.id.includes('ferry')?'ferry':'subway';const l=L.geoJSON(data,{filter:f=>f.properties?.mode===mode,style:f=>({color:f?.properties?.color??'#4b5354',weight:mode==='ferry'?1.3:2.2,opacity:mode==='ferry'?.85:.95,dashArray:mode==='ferry'?'2 6':undefined}),interactive:false}).addTo(this.l);this.layers.push(l);}
  remove(){this.l.remove();}
