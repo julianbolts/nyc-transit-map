@@ -31,8 +31,11 @@ import {
   type Prepared,
 } from "./transit-geometry";
 const BOUNDS: [Point, Point] = [
-  [-74.02412, 40.687087],
-  [-73.923274, 40.768314],
+  // // zoom from dumbo to astoria
+  // [-74.02412, 40.687087],[-73.923274, 40.768314],
+
+  // zoomed on midtown/central park
+  [-73.997873,40.739919],[-73.954656,40.772212],
 ];
 const escape = (s: string) =>
   s.replace(

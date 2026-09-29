@@ -47,7 +47,7 @@ function Harness() {
       </button>
       <output>{JSON.stringify(settings)}</output>
       <div style={{ display: "flex", gap: 20 }}>
-        <div data-testid="first-map" style={{ width: 800, height: 600 }}>
+        <div data-testid="first-map" style={{ width: 700, height: 692 }}>
           <TransitMap
             schedules={schedules}
             workerUrl={workerUrl}
