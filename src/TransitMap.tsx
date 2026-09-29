@@ -5,7 +5,7 @@ import {
   headingBetween,
   unwrapHeading,
 } from "./transit-style";
-import { mapPalette } from "./map-palette";
+import { createBasemapStyle } from "./basemap-style";
 import { cachedJSON } from "./client-cache";
 import { createMapDiagnostics, type MapDiagnostics } from "./map-diagnostics";
 import { Icon, iconMarkup } from "./icons";
@@ -30,7 +30,7 @@ import {
   type Vehicle,
   type Prepared,
 } from "./transit-geometry";
-const BOUNDS: [Point, Point] = [
+export const BOUNDS: [Point, Point] = [
   // // zoom from dumbo to astoria
   // [-74.02412, 40.687087],[-73.923274, 40.768314],
 
@@ -187,53 +187,9 @@ export function TransitMap({
     async function init() {
       const ml = await import("maplibre-gl");
       if (workerUrl) ml.setWorkerUrl(workerUrl);
-      const style: any = structuredClone(
+      const style = createBasemapStyle(
         await cachedJSON(asset("map/style.json"), 86400 * 30),
       );
-      for (const layer of style.layers) {
-        const id = layer.id.toLowerCase();
-        layer.paint ??= {};
-        if (layer.type === "background")
-          layer.paint["background-color"] = mapPalette.background;
-        if (layer.type === "fill") {
-          layer.paint["fill-color"] = id.includes("water")
-            ? mapPalette.water
-            : id.includes("park")
-              ? mapPalette.park
-              : id.includes("landcover")
-                ? mapPalette.landcover
-                : id.includes("building")
-                  ? mapPalette.building
-                  : mapPalette.background;
-          layer.paint["fill-opacity"] = 1;
-        }
-        if (layer.type === "line") {
-          layer.paint["line-color"] = id.includes("water")
-            ? mapPalette.waterway
-            : id.includes("boundary")
-              ? mapPalette.boundary
-              : mapPalette.road;
-          layer.paint["line-opacity"] = id.includes("boundary") ? 0.3 : 0.7;
-        }
-        if (layer.type === "symbol") {
-          if (
-            id.includes("poi") ||
-            id.includes("housenumber") ||
-            id.includes("road") ||
-            id.includes("oneway") ||
-            id.includes("place_city")
-          ) {
-            layer.layout ??= {};
-            layer.layout.visibility = "none";
-          } else {
-            layer.paint["text-color"] = id.includes("water")
-              ? mapPalette.waterLabel
-              : mapPalette.label;
-            layer.paint["text-halo-color"] = mapPalette.halo;
-            layer.paint["text-halo-width"] = 1;
-          }
-        }
-      }
       if (cancelled) return;
       const center: Point = [-73.986, 40.733],
         initialZoom = 11;
@@ -862,10 +818,10 @@ export function TransitMap({
       <picture className="map-backdrop" aria-hidden="true">
         <source
           media="(max-width: 600px)"
-          srcSet={asset("map/backdrop-mobile.webp")}
+          srcSet={asset("map/backdrop-mobile.webp?view=midtown-20260929")}
         />
         <img
-          src={asset("map/backdrop-desktop.webp")}
+          src={asset("map/backdrop-desktop.webp?view=midtown-20260929")}
           alt=""
           fetchPriority="high"
         />

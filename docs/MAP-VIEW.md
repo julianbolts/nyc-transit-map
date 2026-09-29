@@ -4,8 +4,8 @@
 
 ```ts
 const BOUNDS: [Point, Point] = [
-  [-74.02412, 40.687087],
-  [-73.923274, 40.768314],
+  [-73.997873, 40.739919],
+  [-73.954656, 40.772212],
 ];
 ```
 
@@ -16,3 +16,12 @@ Padding is 55 pixels on containers at least 600 pixels wide. Smaller containers 
 The optional Leaflet renderer fits the same box. Its adapter approximates asymmetric padding using left/top padding on both sides. Settings `allowPanning` and `allowZooming` enable interactions independently; both default to false.
 
 The startup center `[-73.986, 40.733]` and zoom 11 are immediately replaced by the bounding-box fit. Static backdrops under `public/map/` are separate images; changing camera bounds does not regenerate them.
+
+
+## Backdrop captures
+
+The current desktop (1440 × 900) and mobile (390 × 844) WebP backdrops were captured from the styled basemap at these Midtown/Central Park bounds. Each uses the same container padding as the interactive map; neither includes vehicle markers or settings controls. Attribution is retained.
+
+To refresh them after changing `BOUNDS`, run `npm run dev` and open `/backdrop.html`. The authoring page reads `BOUNDS` directly from `src/TransitMap.tsx` and uses the shared `src/basemap-style.ts` styling. Set the browser viewport to each size and reload so `fitBounds` recalculates for that viewport. Wait for `body[data-capture-ready="true"]` with no `data-capture-error`, capture the viewport, and encode the result as WebP at the same dimensions. Replace `public/map/backdrop-desktop.webp` and `public/map/backdrop-mobile.webp`, then update the backdrop URL revision in `TransitMap.tsx` to invalidate older browser caches.
+
+The authoring page is available only in the development demo; the production demo build still includes only its main entry. `npm run build` copies both refreshed images into the library's exported assets.
