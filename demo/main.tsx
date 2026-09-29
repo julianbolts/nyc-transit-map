@@ -16,7 +16,7 @@ function App() {
     let cancelled = false;
     async function load() {
       try {
-        const data = await loadMockSchedules("/");
+        const data = await loadMockSchedules(import.meta.env.BASE_URL);
         if (!cancelled) {
           setSchedules(data);
           setError("");
@@ -38,7 +38,7 @@ function App() {
       {schedules ? (
         <TransitMap
           schedules={schedules}
-          assetBaseUrl="/"
+          assetBaseUrl={import.meta.env.BASE_URL}
           loadFallback={loadLeafletRenderer}
           workerUrl={workerUrl}
         />

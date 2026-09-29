@@ -143,9 +143,31 @@ npm pack            # review the distributable; does not publish
 
 `src/TransitMap.tsx` owns rendering; `src/schedule.ts` owns pure timetable/live reconciliation; `src/data.ts` provides the optional JSON mock loader; `demo/main.tsx` illustrates the container boundary. `public/data/network.json` contains canonical geometry with shared signed edge references and verified water clipping. The [architecture review](docs/ARCHITECTURE.md) explains the migration and boundaries; the [map view guide](docs/MAP-VIEW.md) covers the default bounds.
 
+## GitHub Pages demo
+
+The demo is configured to publish at [julianbolts.github.io/nyc-transit-map](https://julianbolts.github.io/nyc-transit-map/). `.github/workflows/deploy-pages.yml` builds `demo/index.html` into `demo-dist/` and deploys that directory, including the schedules and map assets copied from `public/`. It runs on pushes to `main`, manual runs on `main`, and successful runs of **Refresh schedule snapshots** on `main`. Deployment after a refresh checks out updated `main` so the newly committed snapshots are included.
+
+The workflow gets the base path from GitHub Pages and passes it to Vite. Demo data loaders use `import.meta.env.BASE_URL`, as do the map asset URLs. Local development and ordinary demo builds continue to use `/`. To check the GitHub project path locally:
+
+```sh
+npm run build:demo -- --base=/nyc-transit-map/
+npm run preview -- --base=/nyc-transit-map/
+# Open http://127.0.0.1:4173/nyc-transit-map/
+```
+
+One-time GitHub web UI setup:
+
+1. Keep the repository public for Pages on GitHub Free. Keep `main` as the default branch; the deployment workflow and nightly refresh integration target it.
+2. Open [Settings → Pages](https://github.com/julianbolts/nyc-transit-map/settings/pages). Under **Build and deployment → Source**, select **GitHub Actions**. Leave **Custom domain** blank to use the default GitHub URL.
+3. Under [Settings → Actions → General](https://github.com/julianbolts/nyc-transit-map/settings/actions), ensure GitHub Actions is enabled and the `actions/*` actions used by the workflows are allowed. The workflows declare their required token permissions; no personal access token or additional secret is needed.
+4. If branch rules protect `main`, ensure the existing schedule refresh workflow can push its validated snapshot commits, or adapt that workflow to your branch policy. If the `github-pages` environment has deployment branch restrictions, allow `main`; required reviewers will pause each deployment for approval.
+5. Merge or push these files to `main`. In **Actions → Deploy demo to GitHub Pages**, wait for the run to finish. If setup was completed after the first run failed, select **Run workflow → main → Run workflow**. The successful deployment links to the demo URL above. For an immediate schedule update, manually run **Refresh schedule snapshots** on `main`; a successful run then deploys the demo automatically.
+
+GitHub documents [custom Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages) and [why pushes made with `GITHUB_TOKEN` do not trigger another push workflow](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow). The deployment uses `workflow_run` to follow the refresh without needing another token.
+
 ## Nightly refresh
 
-`.github/workflows/refresh-schedules.yml` downloads official feeds nightly at 06:15 UTC (01:15 EST / 02:15 EDT), validates both feeds, runs checks/build and commits the JSON updates. It can also be triggered manually. The repository must allow GitHub Actions to write contents and push to its default branch. Branch protection may require adapting the final commit step to your repository policy. Committing data does not update installed package versions: rebuild/redeploy a hosted demo or distribute refreshed assets through your own release/CDN pipeline.
+`.github/workflows/refresh-schedules.yml` downloads official feeds nightly at 06:15 UTC (01:15 EST / 02:15 EDT), validates both feeds, runs checks/build and commits the JSON updates. It can also be triggered manually. The repository must allow GitHub Actions to write contents and push to its default branch. Branch protection may require adapting the final commit step to your repository policy. Successful refreshes on `main` automatically deploy the GitHub Pages demo. Committing data does not update installed package versions: distribute refreshed assets through your own release/CDN pipeline.
 
 ```sh
 npm run refresh:schedules

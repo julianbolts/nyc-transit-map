@@ -8,7 +8,7 @@ import { createBasemapStyle } from "../src/basemap-style";
 // Authoring-only page: capture once the DOM reports data-capture-ready="true".
 // Dimensions: desktop 1440x900; mobile 390x844. No routes, vehicles or UI.
 setWorkerUrl(workerUrl);
-const response = await fetch("/map/style.json");
+const response = await fetch(`${import.meta.env.BASE_URL}map/style.json`);
 if (!response.ok) throw new Error("Basemap style could not load");
 const style = createBasemapStyle((await response.json()) as StyleSpecification);
 const map = new Map({

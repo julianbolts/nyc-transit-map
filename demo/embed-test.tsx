@@ -17,7 +17,7 @@ function Harness() {
   const [show, setShow] = useState(true);
   const [live, setLive] = useState<LiveVehicles>();
   useEffect(() => {
-    void loadMockSchedules("/").then(setSchedules);
+    void loadMockSchedules(import.meta.env.BASE_URL).then(setSchedules);
   }, []);
   if (!schedules) return <p>Loading fixture…</p>;
   return (
@@ -51,7 +51,7 @@ function Harness() {
           <TransitMap
             schedules={schedules}
             workerUrl={workerUrl}
-            assetBaseUrl="/"
+            assetBaseUrl={import.meta.env.BASE_URL}
             settings={settings}
             onSettingsChange={setSettings}
             liveVehicles={live}
@@ -62,7 +62,7 @@ function Harness() {
           <TransitMap
             schedules={schedules}
             workerUrl={workerUrl}
-            assetBaseUrl="/"
+            assetBaseUrl={import.meta.env.BASE_URL}
             showSettings={false}
             defaultSettings={{ allowZooming: true }}
           />
