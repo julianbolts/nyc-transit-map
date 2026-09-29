@@ -1,0 +1,627 @@
+.nyc-transit-map {
+  --background: #222629;
+  --foreground: #f3f4f4;
+  --primary: #c6dfd5;
+  --primary-foreground: #141c18;
+  --input: #495054;
+  --ring: #a5cabe;
+  --popover: #23282b;
+  --popover-foreground: #f3f4f4;
+  --border: #3b4144;
+  --muted-foreground: #a0a8aa;
+}
+.nyc-transit-map * {
+  box-sizing: border-box;
+}
+.nyc-transit-map {
+  margin: 0;
+  background: #202527;
+  color: #edf0ef;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.nyc-transit-map button {
+  cursor: pointer;
+}
+.nyc-transit-map button:focus-visible {
+  outline: 2px solid #bdd6cd;
+  outline-offset: 4px;
+}
+.nyc-transit-map .map {
+  position: absolute;
+  inset: 0;
+}
+.nyc-transit-map .gear {
+  position: absolute;
+  z-index: 20;
+  right: 24px;
+  top: max(22px, env(safe-area-inset-top));
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: #f4f6f5;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+.nyc-transit-map .gear:hover,
+.nyc-transit-map .gear[data-state="open"] {
+  opacity: 1;
+}
+.nyc-transit-map .settings {
+  width: 330px !important;
+  padding: 24px !important;
+  margin-right: 20px;
+  border: 1px solid #41484a !important;
+  border-radius: 14px !important;
+  box-shadow: 0 18px 60px #0005 !important;
+}
+.nyc-transit-map .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9ba6a8;
+}
+.nyc-transit-map .settings h2 {
+  font-weight: 500;
+  font-size: 21px;
+  margin: 0 0 26px;
+}
+.nyc-transit-map .setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 22px 0;
+  font-size: 15px;
+}
+.nyc-transit-map .setting-row small {
+  display: block;
+  color: #a5afb0;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 4px;
+  max-width: 225px;
+}
+.nyc-transit-map .divider {
+  height: 1px;
+  background: #3c4446;
+  margin: 24px 0;
+}
+.nyc-transit-map .settings .note {
+  font-size: 12px;
+  line-height: 1.65;
+  color: #a4aeaf;
+  margin: 14px 0 0;
+}
+.nyc-transit-map .settings a {
+  color: #c2cecd;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.nyc-transit-map .reset {
+  font-size: 13px;
+  background: none;
+  color: #d7e2df;
+  border: 1px solid #505b5d;
+  border-radius: 7px;
+  padding: 9px 12px;
+}
+.nyc-transit-map .vehicle {
+  width: 29px;
+  height: 29px;
+  border: 1px solid #ffffff55;
+  border-radius: 8px;
+  background: #e5ece8;
+  color: #162123;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 7px #0006;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
+  padding: 5px;
+}
+.nyc-transit-map .vehicle.ferry {
+  background: #b6d6dc;
+  border-color: #d0ebef;
+  border-radius: 50%;
+  color: #17333c;
+}
+.nyc-transit-map .vehicle:hover,
+.nyc-transit-map .vehicle.selected {
+  background: #fff;
+  box-shadow:
+    0 0 0 4px #edf5ee30,
+    0 3px 12px #0007;
+  z-index: 3;
+}
+.nyc-transit-map .vehicle svg {
+  width: 18px;
+  height: 18px;
+}
+.nyc-transit-map .maplibregl-popup {
+  z-index: 30;
+}
+.nyc-transit-map .maplibregl-popup-content {
+  background: #e4e9e7 !important;
+  color: #26322f !important;
+  padding: 0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 55px #0005 !important;
+  overflow: hidden;
+}
+.nyc-transit-map .maplibregl-popup-tip {
+  border-top-color: #e4e9e7 !important;
+  border-bottom-color: #e4e9e7 !important;
+}
+.nyc-transit-map .schedule {
+  width: 310px;
+  max-width: calc(100vw - 48px);
+  font-family: Arial, sans-serif;
+}
+.nyc-transit-map .schedule-head {
+  padding: 22px 22px 18px;
+  border-bottom: 1px solid #cbd3ce;
+  position: relative;
+}
+.nyc-transit-map .schedule-head .eyebrow {
+  color: #667770;
+  font-size: 11px;
+}
+.nyc-transit-map .schedule-head h2 {
+  font-size: 19px;
+  line-height: 1.3;
+  letter-spacing: -0.4px;
+  font-weight: 500;
+  margin: 8px 20px 8px 0;
+}
+.nyc-transit-map .schedule-head p {
+  font-size: 12px;
+  color: #64746d;
+  margin: 0;
+}
+.nyc-transit-map .close {
+  position: absolute;
+  top: 15px;
+  right: 13px;
+  border: 0;
+  background: transparent;
+  font-size: 23px;
+  color: #6c7b74;
+  line-height: 1;
+  width: 27px;
+  height: 27px;
+}
+.nyc-transit-map .stops {
+  max-height: 300px;
+  overflow: auto;
+  padding: 17px 20px 20px;
+  scrollbar-width: thin;
+  scrollbar-color: #a5b3ac transparent;
+}
+.nyc-transit-map .stop {
+  display: grid;
+  grid-template-columns: 57px 16px 1fr;
+  gap: 10px;
+  min-height: 46px;
+  align-items: start;
+  font-size: 13px;
+  line-height: 18px;
+  position: relative;
+}
+.nyc-transit-map .stop time {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  text-align: right;
+  color: #4d6057;
+}
+.nyc-transit-map .stop .pin {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  height: 100%;
+}
+.nyc-transit-map .stop .pin:before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: -8px;
+  width: 1px;
+  background: #82978b;
+}
+.nyc-transit-map .stop:last-child .pin:before {
+  display: none;
+}
+.nyc-transit-map .stop .pin:after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid #526c5d;
+  background: #e4e9e7;
+  position: relative;
+  top: 5px;
+}
+.nyc-transit-map .stop.next .pin:after {
+  background: #426b56;
+  box-shadow: 0 0 0 4px #a8c2b250;
+}
+.nyc-transit-map .stop.past {
+  opacity: 0.35;
+}
+.nyc-transit-map .stop.next {
+  font-weight: 600;
+}
+.nyc-transit-map .stop small {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5b7565;
+  margin: 3px 0 12px;
+}
+.nyc-transit-map .maplibregl-ctrl-attrib {
+  background: #202527aa !important;
+  color: #81908b !important;
+  font-size: 9px !important;
+}
+.nyc-transit-map .maplibregl-ctrl-attrib a {
+  color: inherit !important;
+}
+.nyc-transit-map .map-status {
+  position: absolute;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #252c2fee;
+  color: #b8c6c2;
+  font-size: 13px;
+  z-index: 9;
+  max-width: 90%;
+  text-align: center;
+}
+.nyc-transit-map .maplibregl-canvas:focus {
+  outline: none;
+}
+@media (max-width: 600px) {
+  .nyc-transit-map .gear {
+    right: 14px;
+    top: max(16px, env(safe-area-inset-top));
+  }
+  .nyc-transit-map .settings {
+    margin-right: 12px;
+    width: min(330px, calc(100vw - 24px)) !important;
+  }
+  .nyc-transit-map .vehicle {
+    width: 27px;
+    height: 27px;
+  }
+  .nyc-transit-map .stops {
+    max-height: 240px;
+  }
+}
+.nyc-transit-map .leaflet-container {
+  background: #303236 !important;
+}
+.nyc-transit-map .leaflet-control-attribution {
+  background: #202527aa !important;
+  color: #81908b !important;
+  font-size: 9px !important;
+}
+.nyc-transit-map .leaflet-control-attribution a {
+  color: inherit !important;
+}
+.nyc-transit-map .vehicle-holder {
+  background: none !important;
+  border: 0 !important;
+}
+.nyc-transit-map .park-label {
+  font:
+    10px/1.5 Arial,
+    sans-serif;
+  letter-spacing: 1.4px;
+  text-align: center;
+  color: #a2a8ad;
+  pointer-events: none;
+}
+.nyc-transit-map .leaflet-popup-content-wrapper {
+  background: #e4e9e7 !important;
+  padding: 0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 55px #0005 !important;
+  overflow: hidden;
+}
+.nyc-transit-map .leaflet-popup-content {
+  margin: 0 !important;
+  width: 310px !important;
+}
+.nyc-transit-map .leaflet-popup-tip {
+  background: #e4e9e7 !important;
+}
+.nyc-transit-map .leaflet-popup-content p {
+  margin: 0 !important;
+}
+.nyc-transit-map .leaflet-container a {
+  color: inherit;
+}
+.nyc-transit-map .leaflet-popup {
+  margin-bottom: 0 !important;
+}
+.nyc-transit-map .vehicle {
+  width: 22px;
+  height: 22px;
+  padding: 3px;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px #0004;
+  border-color: #dce7e244;
+  background: #d0dbd5;
+}
+.nyc-transit-map .vehicle svg {
+  width: 15px;
+  height: 15px;
+}
+.nyc-transit-map .vehicle.ferry {
+  width: 25px;
+  height: 25px;
+  padding: 4px;
+  background: #aacbd3;
+}
+.nyc-transit-map .vehicle-holder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nyc-transit-map .vehicle:hover,
+.nyc-transit-map .vehicle.selected {
+  box-shadow:
+    0 0 0 3px #edf5ee30,
+    0 2px 8px #0007;
+}
+.nyc-transit-map .park-label {
+  font-size: 10px !important;
+}
+.nyc-transit-map .map-backdrop {
+  position: absolute;
+  inset: 0;
+  background: #303236;
+  pointer-events: none;
+}
+.nyc-transit-map .map-backdrop img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+.nyc-transit-map .map {
+  transition: opacity 0.25s;
+}
+.nyc-transit-map .vehicle,
+.nyc-transit-map .vehicle.ferry {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--route-text, #fff);
+  overflow: visible;
+  isolation: isolate;
+}
+.nyc-transit-map .vehicle .badge-shape {
+  position: absolute;
+  inset: 2px;
+  background: var(--route-color, #808183);
+  border: 1px solid #ffffffe6;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px #0008;
+  z-index: 1;
+}
+.nyc-transit-map .vehicle.express .badge-shape {
+  inset: 5px;
+  border-radius: 0;
+  transform: rotate(45deg);
+}
+.nyc-transit-map .vehicle .badge-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+  z-index: 2;
+}
+.nyc-transit-map .vehicle[title^="SIR"] .badge-label {
+  font-size: 10px;
+  letter-spacing: -0.6px;
+}
+.nyc-transit-map .vehicle .badge-label svg {
+  height: 17px;
+  width: 17px;
+  stroke: currentColor;
+}
+.nyc-transit-map .vehicle .direction {
+  position: absolute;
+  inset: 0;
+  transform: rotate(var(--heading, 0deg));
+  transform-origin: center;
+  z-index: 0;
+  pointer-events: none;
+}
+.nyc-transit-map .vehicle .direction svg {
+  position: absolute;
+  width: 26px;
+  height: 12px;
+  left: 2px;
+  top: -7px;
+  overflow: visible;
+}
+.nyc-transit-map .vehicle .direction path {
+  fill: var(--route-color);
+  stroke: #fff;
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+}
+.nyc-transit-map .vehicle:hover,
+.nyc-transit-map .vehicle.selected {
+  background: transparent;
+  box-shadow: none;
+}
+.nyc-transit-map .vehicle:hover .badge-shape,
+.nyc-transit-map .vehicle.selected .badge-shape {
+  box-shadow:
+    0 0 0 3px #ffffff35,
+    0 2px 7px #0009;
+}
+.nyc-transit-map .ferry-terminal {
+  height: 21px;
+  width: 21px;
+  border-radius: 50%;
+  padding: 2px;
+  box-shadow: 0 0 0 1px #172327aa;
+  display: grid;
+  place-items: center;
+  z-index: 0;
+}
+.nyc-transit-map .ferry-terminal > span {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  background: var(--terminal-color, #008eb8);
+  border-radius: 50%;
+  color: white;
+  border: 1px solid #ffffff60;
+}
+.nyc-transit-map .ferry-terminal svg {
+  height: 12px;
+  width: 12px;
+}
+.nyc-transit-map .maplibregl-marker:has(.badge-shape) {
+  z-index: 5;
+}
+.nyc-transit-map .maplibregl-marker.ferry-terminal {
+  z-index: 1;
+}
+.nyc-transit-map .ferry-terminal {
+  background: #008fd0;
+  padding: 2px;
+  box-shadow: 0 0 0 1px #b5e8ff99;
+}
+.nyc-transit-map .ferry-terminal > span {
+  background: #008fd0;
+  border: 0;
+}
+.nyc-transit-map .station-tooltip {
+  padding: 16px 20px;
+  font:
+    500 15px/1.4 Arial,
+    Helvetica,
+    sans-serif;
+  color: #26322f;
+  max-width: 310px;
+}
+.nyc-transit-map .ferry-terminal {
+  border: 0;
+  cursor: pointer;
+}
+.nyc-transit-map .vehicle-holder > .vehicle {
+  position: relative;
+}
+.nyc-transit-map .vehicle.jump-cut,
+.nyc-transit-map .vehicle-holder:has(.jump-cut) {
+  transition: none !important;
+}
+.nyc-transit-map .settings {
+  max-height: calc(100% - 80px);
+  overflow-y: auto;
+}
+
+.nyc-transit-map {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  overflow: hidden;
+  isolation: isolate;
+  color: #edf0ef;
+  font-family: Arial, Helvetica, sans-serif;
+  container-type: inline-size;
+}
+.nyc-transit-map .settings-container {
+  position: static;
+}
+.nyc-transit-map .settings {
+  position: absolute;
+  z-index: 21;
+  right: 24px;
+  top: 75px;
+  margin: 0;
+  background: #23282b;
+  color: #f3f4f4;
+  max-width: calc(100% - 24px);
+}
+.nyc-transit-map .gear[aria-expanded="true"] {
+  opacity: 1;
+}
+.nyc-transit-map .toggle {
+  border: 0;
+  width: 32px;
+  height: 18px;
+  flex: none;
+  padding: 2px;
+  border-radius: 99px;
+  background: #495054;
+  transition: background 0.2s;
+}
+.nyc-transit-map .toggle span {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #edf0ef;
+  transition: transform 0.2s;
+}
+.nyc-transit-map .toggle[aria-checked="true"] {
+  background: #c6dfd5;
+}
+.nyc-transit-map .toggle[aria-checked="true"] span {
+  transform: translateX(14px);
+  background: #141c18;
+}
+.nyc-transit-map .inline-icon {
+  display: inline-block;
+  vertical-align: middle;
+}
+.nyc-transit-map .inline-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.nyc-transit-map .reset .inline-icon {
+  margin-right: 7px;
+}
+@container (max-width:600px) {
+  .nyc-transit-map .gear {
+    right: 14px;
+  }
+  .nyc-transit-map .settings {
+    right: 12px;
+  }
+  .nyc-transit-map .stops {
+    max-height: 240px;
+  }
+}
+
+.nyc-transit-map .map {
+  z-index: 0;
+}

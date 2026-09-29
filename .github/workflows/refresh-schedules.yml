@@ -1,0 +1,34 @@
+name: Refresh schedule snapshots
+on:
+  schedule:
+    # 06:15 UTC is 01:15 EST / 02:15 EDT: after New York midnight year-round.
+    - cron: '15 6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: schedule-refresh
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run refresh:schedules
+      - run: npm run typecheck && npm test && npm run build
+      - name: Commit validated snapshots
+        run: |
+          if git diff --quiet -- public/data; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/data/subway-schedule.json public/data/ferry-schedule.json public/data/route-meta.json
+          git commit -m 'Refresh transit schedule snapshots'
+          git push
