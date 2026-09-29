@@ -1,5 +1,5 @@
 import fs from 'node:fs';import {gunzipSync} from 'node:zlib';import {VectorTile} from '@mapbox/vector-tile';import {PbfReader} from 'pbf';
-import {decodeNetwork} from '../lib/transit-geometry.ts';
+import {decodeNetwork} from '../src/transit-geometry.ts';
 const network=JSON.parse(fs.readFileSync('public/data/network.json'));const shapes=decodeNetwork(network);const cache=new Map();
 function water(lng,lat){const x=(lng+180)/360*4096,y=(1-Math.asinh(Math.tan(lat*Math.PI/180))/Math.PI)/2*4096;const tx=Math.floor(x),ty=Math.floor(y),key=tx+'-'+ty;let tile=cache.get(key);if(!tile){const file='/tmp/water-tiles/'+key+'.mvt';if(!fs.existsSync(file))return null;tile=new VectorTile(new PbfReader(gunzipSync(fs.readFileSync(file))));cache.set(key,tile);}const layer=tile.layers.water;if(!layer)return false;const px=(x-tx)*layer.extent,py=(y-ty)*layer.extent;for(let i=0;i<layer.length;i++){let inside=false;for(const ring of layer.feature(i).loadGeometry()){for(let a=0,b=ring.length-1;a<ring.length;b=a++){const p=ring[a],q=ring[b];if((p.y>py)!==(q.y>py)&&px<(q.x-p.x)*(py-p.y)/(q.y-p.y)+p.x)inside=!inside;}}if(inside)return true;}return false;}
 // Clip shore-side terminal coordinates to the first wet point on the same route.

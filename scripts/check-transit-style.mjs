@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import ts from 'typescript';
-const code=ts.transpileModule(fs.readFileSync('lib/transit-style.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
+const code=ts.transpileModule(fs.readFileSync('src/transit-style.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
 const {appearance,headingBetween,unwrapHeading}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
 assert.equal(appearance('subway','4').color,appearance('subway','6').color);
 for(const route of ['6X','7X','FX']){assert.ok(appearance('subway',route).express);assert.equal(appearance('subway',route).label,route[0]);}

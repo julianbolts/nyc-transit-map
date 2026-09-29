@@ -1,37 +1,156 @@
-# City in Motion
+# NYC Transit Map
 
-A quiet full-screen NYC subway and ferry map. Pan and zoom are locked by default. Gear settings enable navigation and independent live feeds. Selecting a vehicle opens its journey timeline.
+An embeddable React map with animated NYC subway and ferry journeys. The host supplies timetables and optional live vehicles. The package contains ESM, TypeScript declarations, scoped CSS and separate static assets. React and map engines are external peers; no Next.js, server routes, database, Cloudflare runtime, UI framework or vendored engine code is included.
 
-The [default map view guide](docs/MAP-VIEW.md) explains the bounding box, zoom, padding, and how to change the initial and reset views.
+## Embed
 
-## Data and animation
+Install this package alongside `react` and `maplibre-gl`. Import the styles once. Copy `node_modules/nyc-transit-map/dist/assets` into your app's public directory (for example, `public/transit`) and serve those files. Keep the asset directory structure intact. `assetBaseUrl` supports subpaths and CDN URLs.
 
-- `scripts/prepare-transit.py` imports official MTA regular subway GTFS and NYC Ferry GTFS downloaded into `/tmp/subway.zip` and `/tmp/ferry.zip`. Calendars and holiday exceptions are respected; trips after midnight retain their service date.
-- `data/transit.json` stores timetables using shared timing patterns. Current data was imported September 24, 2026. This is a bundled schedule snapshot, not an automatic feed-refresh job. Refresh and redeploy before the feed calendars expire. Regular MTA schedules omit some temporary service changes.
-- `public/data/network.json` stores canonical station-pair geometry and signed edge references. Negative references read the same coordinate list in reverse. Different geometry is retained as a variant. Express trains can pass intermediate graph stations without stopping.
-- `lib/transit-geometry.ts` exports `getSegment(shapeId, path, from, to, minimumDistance)` and caches by geometry revision, directed shape, station pair, and loop occurrence. Trip dates and predictions never invalidate geometry. Animation follows cumulative route distance, including corrections between feed refreshes.
-- Ferry shore-side approaches are clipped using OpenStreetMap water polygons; the displayed routes and animated positions use the same adjusted shapes.
-- `/api/transit` fetches and decodes public GTFS-RT on the server. Subway trip IDs are normalized against static trips. Fresh matching arrivals update timings; ferry GPS is matched to route geometry. Unavailable or stale feeds explicitly fall back to schedules. Extra real-time trips without a matching static trip are not rendered.
-- MTA feeds represent station/arrival predictions, not precise underground GPS. This is a visualization, not a navigation app.
+```tsx
+import { TransitMap, type TransitSchedules } from 'nyc-transit-map';
+import 'nyc-transit-map/styles.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
+// Vite bundles the worker and its internal dependencies in the host app.
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 
-## Validation
+export function TransitContainer({ schedules }: { schedules: TransitSchedules }) {
+  return (
+    <div style={{ height: 600 }}>
+      <TransitMap
+        schedules={schedules}
+        assetBaseUrl="/transit/"
+        workerUrl={workerUrl}
+        showSettings={false}
+        defaultSettings={{ allowPanning: true, allowZooming: true }}
+      />
+    </div>
+  );
+}
+```
 
-`node --experimental-strip-types scripts/check-geometry.mjs` checks cache reuse, segment ordering and valid positions against all imported route/timing patterns.
+The map fills its container, observes container resizing and keeps its controls/popups within that area. Give the container a height. Multiple instances use independent state and unique control IDs. Importing the package does not access browser globals; mount the map in a client boundary when using an SSR framework.
 
-`node --experimental-strip-types scripts/validate-water.mjs` validates and clips ferry geometry against z12 CARTO/OpenStreetMap water tiles in `/tmp/water-tiles`. Tiles use filenames `X-Y.mvt` (gzip). Download tiles covering the map region before rerunning this check. It is an authoring-time check, not a runtime network dependency.
+## Container and mock API
 
-MapLibre draws the main map; a Canvas/Leaflet renderer uses the same vector tiles on browsers without WebGL2. Data attribution remains visible. Icons are Lucide TrainFront, Ship and Settings.
+The map never loads schedules or calls transit APIs. Your container owns loading, polling, authentication, errors and live feed normalization. Replace the mock loader with your own API whenever ready:
 
-## Loading and cache policy (September 24 fix)
+```tsx
+import { useEffect, useState } from 'react';
+import { TransitMap, type TransitSchedules } from 'nyc-transit-map';
+import { loadMockSchedules } from 'nyc-transit-map/data';
 
-The production blank map was caused by a missing MapLibre ESM worker asset (404), not an observed agency rate limit. Worker and shared-module assets are explicitly shipped under the versioned `/vendor/maplibre-6.10.0/` directory. Lightweight same-origin map backdrops render before JavaScript or transit data. Map, geometry and schedule requests run independently, with an 8-second map fallback and 12-second data request timeout.
+export function MockTransitContainer() {
+  const [schedules, setSchedules] = useState<TransitSchedules>();
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let mounted = true;
+    async function refresh() {
+      try {
+        const value = await loadMockSchedules('/transit/');
+        if (mounted) { setSchedules(value); setError(''); }
+      } catch {
+        if (mounted) setError('Schedules could not load.');
+      }
+    }
+    void refresh();
+    const timer = setInterval(refresh, 60_000);
+    return () => { mounted = false; clearInterval(timer); };
+  }, []);
+  if (!schedules) return <p role="status">{error || 'Loading schedules…'}</p>;
+  return <div style={{ height: 600 }}><TransitMap schedules={schedules} assetBaseUrl="/transit/" /></div>;
+}
+```
 
-The default mode fetches `/api/schedule` once for the current New York day, persists the result in the browser Cache API and selects/animates trips locally. Concurrent requests share a promise. The server also caches each day's compact response in memory and the Cloudflare edge cache. The cache expires at local midnight (at most 24 hours); it is distinct from the publication date of the bundled agency timetable. It does not automatically reimport newer upstream schedule files.
+`loadMockSchedules` reads `data/subway-schedule.json` and `data/ferry-schedule.json`. It shares concurrent requests and caches for at most 60 seconds, bounded by snapshot expiry. The snapshot date and original import time remain visible; expired data is explicitly labeled instead of relabeled as today's service. The default asset URL is relative to the ESM output for direct browser imports; **set `assetBaseUrl` explicitly in bundled apps**.
 
-Live feeds are fetched server-side only when enabled, cached by source URL across visitors at each Cloudflare edge location, and deduplicated within each worker isolate. Cache TTLs are 30 seconds for MTA and 60 seconds for NYC Ferry. Failed requests back off for 60 seconds; HTTP Retry-After is respected (30 seconds–1 hour). Stale live timestamps still trigger the labeled schedule fallback.
+The fallback files were downloaded from official MTA regular GTFS and NYC Ferry GTFS on **September 29, 2026**. They contain that day's service, previous-day trips continuing after midnight and next-day service to bridge the nightly CI refresh. Calendar exceptions, times beyond 24:00 and New York daylight-saving transitions are respected. Regular MTA GTFS can omit temporary service changes; hosts needing those can supply supplemented schedules. Sources: [MTA developer resources](https://www.mta.info/developers), [NYC Ferry developer tools](https://www.ferry.nyc/developer-tools/).
 
-Suggested upstream schedule revalidation: daily for regular MTA GTFS (officially updated a few times per year), hourly if adopting MTA supplemented GTFS (officially updated hourly), daily for NYC Ferry GTFS (no published cadence found). Use Last-Modified/ETag during an import refresh. Geometry and style cache for 30 days; versioned worker assets cache for one year.
+## Public types and settings
 
-Sources: https://www.mta.info/developers ; https://www.mta.info/document/134521 (feed generated every 30 seconds); https://www.ferry.nyc/developer-tools/ (publishes endpoints, no update frequency).
+The root exports `TransitMap`, `DEFAULT_SETTINGS`, `TransitMapProps`, `TransitMapSettings`, `TransitSchedules`, `ScheduleData`, `LiveVehicles`, `Vehicle`, `Stop`, `Point`, `TransitMode`, `RouteMetadata` and `MapRenderer`.
 
-`node scripts/check-loading-cache.mjs` verifies request coalescing, cache hits, expiration and presence of the packaged worker/backdrop assets.
+| Prop | Behavior |
+| --- | --- |
+| `schedules` | Required `{ subway: ScheduleData, ferry: ScheduleData }` |
+| `liveVehicles` | Optional `{ subway?: readonly Vehicle[], ferry?: readonly Vehicle[] }` |
+| `showSettings` | Shows/hides the gear and settings panel; defaults to `true` |
+| `defaultSettings` | Initial uncontrolled settings |
+| `settings` | Controlled overrides; update these in `onSettingsChange` |
+| `onSettingsChange` | Receives the complete next settings value |
+| `assetBaseUrl` | Base URL containing the exported `data/` and `map/` directories |
+| `workerUrl` | Host-bundled MapLibre module worker URL; use the same value across instances |
+| `loadFallback` | Optional stable loader for the separately imported fallback renderer |
+| `className`, `style` | Applied to the component root |
+
+```ts
+const settings: TransitMapSettings = {
+  allowPanning: false,
+  allowZooming: false,
+  subwayLive: false,
+  ferryLive: false,
+};
+```
+
+All four defaults are `false`. Settings remain effective when the gear is hidden. To control them from your app:
+
+```tsx
+const [settings, setSettings] = useState({ ...DEFAULT_SETTINGS });
+<TransitMap schedules={schedules} settings={settings} onSettingsChange={setSettings} />;
+```
+
+`ScheduleData` uses shared timing patterns to keep JSON compact:
+
+```ts
+interface ScheduleData {
+  version: string;
+  date: string; // snapshot date YYYY-MM-DD
+  validUntil: number; // Unix seconds
+  sources: Record<string, { downloaded: string; url?: string }>;
+  stops: Record<string, [name: string, longitude: number, latitude: number]>;
+  routes: Record<string, [shortName: string, longName: string, mode: 'subway' | 'ferry']>;
+  patterns: [stopId: string, arrivalOffset: number, departureOffset: number, sequence: number][][];
+  trips: [id: string, routeId: string, headsign: string, shapeId: string, patternIndex: number, startSeconds: number, serviceBaseEpoch: number][];
+}
+```
+
+Trip stop epochs are `serviceBaseEpoch + startSeconds + patternOffset`. Namespace IDs as `subway:` or `ferry:`. Shape IDs must match the exported verified network. The importer refuses unknown shapes so new agency geometry receives review before shipping.
+
+A live `Vehicle` carries `id`, route badge code (for example `A` or `ER`), `headsign`, `mode`, `shape`, `stops`, `live` and optional `gps: [lng, lat]`. Stop arrival/departure times are Unix seconds. The host owns freshness checks, cancellations, delays and GPS matching. The map processes prop updates immediately and animates locally. Enable `subwayLive`/`ferryLive` to select the supplied live vehicles for each mode. An omitted mode falls back to its timetable independently; an explicit `[]` means no live vehicles for that mode. Stable IDs preserve animation and selection across updates.
+
+## Optional non-WebGL renderer
+
+To retain the Leaflet/Canvas fallback, also install `leaflet`, `@mapbox/vector-tile` and `pbf`:
+
+```tsx
+import { loadLeafletRenderer } from 'nyc-transit-map/leaflet';
+import 'leaflet/dist/leaflet.css';
+<TransitMap schedules={schedules} assetBaseUrl="/transit/" loadFallback={loadLeafletRenderer} />;
+```
+
+This separate entry leaves Leaflet and vector-tile decoding out of hosts that use only MapLibre. The host owns MapLibre worker packaging; no copied worker or engine files ship in the library. With Vite, import `maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url` and pass it as `workerUrl` (as in the first example). Other bundlers can supply an equivalent module worker URL; its dependencies must be resolvable. The mock container example should also receive/pass your configured worker URL, or configure MapLibre globally through `setWorkerUrl` before mounting. Basemap tiles/fonts remain external CARTO/OpenStreetMap requests. Attribution remains visible.
+
+## Development and builds
+
+```sh
+npm ci
+npm run dev          # static Vite demo; no server API
+npm run typecheck
+npm test             # data reconciliation, geometry, palettes and request caching
+npm run build        # ESM + declarations + CSS + assets in dist/
+npm run build:demo   # standalone static demo in demo-dist/
+npm pack            # review the distributable; does not publish
+```
+
+`src/TransitMap.tsx` owns rendering; `src/schedule.ts` owns pure timetable/live reconciliation; `src/data.ts` provides the optional JSON mock loader; `demo/main.tsx` illustrates the container boundary. `public/data/network.json` contains canonical geometry with shared signed edge references and verified water clipping. The [architecture review](docs/ARCHITECTURE.md) explains the migration and boundaries; the [map view guide](docs/MAP-VIEW.md) covers the default bounds.
+
+## Nightly refresh
+
+`.github/workflows/refresh-schedules.yml` downloads official feeds nightly at 06:15 UTC (01:15 EST / 02:15 EDT), validates both feeds, runs checks/build and commits the JSON updates. It can also be triggered manually. The repository must allow GitHub Actions to write contents and push to its default branch. Branch protection may require adapting the final commit step to your repository policy. Committing data does not update installed package versions: rebuild/redeploy a hosted demo or distribute refreshed assets through your own release/CDN pipeline.
+
+```sh
+npm run refresh:schedules
+# Reproduce a downloaded import:
+python3 scripts/refresh-schedules.py --feed-dir /tmp --date 2026-09-29
+```
+
+The importer uses Python's standard library. It validates calendars, stop references and compatibility with the existing network before replacing files. Geometry changes stay an authoring task; `scripts/validate-water.mjs` requires downloaded z12 water tiles under `/tmp/water-tiles` and should only run when reviewing new ferry geometry.

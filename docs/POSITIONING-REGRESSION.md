@@ -1,6 +1,8 @@
 # Transit positioning regression — 2026-09-24
 
-Status: fixed and verified; publishing through Sites workflow. Replaces completed ICON-UPDATE-HANDOFF.md.
+Historical record of the September 24 fix. The September 29 component migration supersedes the deployment and importer notes below; see [ARCHITECTURE.md](ARCHITECTURE.md). Current geometry/style modules live under `src/`, the host bundles MapLibre workers, and the nightly importer is implemented.
+
+Original status: fixed and verified; publishing through Sites workflow. Replaces completed ICON-UPDATE-HANDOFF.md.
 Site: appgprj_6ab58748229c8191a1875b464abf7e1e
 URL: https://city-in-motion.juliansoro-dev.chatgpt.site
 Checkout: /workspace/sites/city-in-motion
