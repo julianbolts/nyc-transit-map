@@ -17,8 +17,8 @@ export interface TransitMapSettings {
   ferryLive: boolean;
 }
 export const DEFAULT_SETTINGS: Readonly<TransitMapSettings> = Object.freeze({
-  allowPanning: false,
-  allowZooming: false,
+  allowPanning: true,
+  allowZooming: true,
   subwayLive: false,
   ferryLive: false,
 });
