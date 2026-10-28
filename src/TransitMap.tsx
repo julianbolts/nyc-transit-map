@@ -130,10 +130,6 @@ export function TransitMap({
   const [mapVisible, setMapVisible] = useState(false);
   const [mapVersion, setMapVersion] = useState(0);
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState({
-    subway: "Loading schedules…",
-    ferry: "Loading schedules…",
-  });
   const [notice, setNotice] = useState("Loading transit schedules…");
   const clock = useRef(0);
   const lastPopup = useRef(0);
@@ -162,22 +158,6 @@ export function TransitMap({
   }, [loaded, mapVersion]);
   const reset = () =>
     map.current?.fitBounds(BOUNDS, { padding: padding(), duration: 700 });
-  const downloadDiagnostics = () => {
-    const report = diagnostics.current?.report();
-    if (!report) return;
-    diagnostics.current?.record("diagnostics_downloaded");
-    const blob = new Blob([JSON.stringify(report, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `transit-map-diagnostics-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
   useEffect(() => {
     let cancelled = false,
       frame = 0;
@@ -685,7 +665,6 @@ export function TransitMap({
         });
         if (cancelled) return;
         clock.current = 0;
-        setStatus(data.status);
         setNotice(
           data.notice ??
             (data.vehicles.length ? "" : "No scheduled journeys are active."),
@@ -786,10 +765,6 @@ export function TransitMap({
       } catch (error) {
         if (cancelled) return;
         console.error("Transit update", error);
-        setStatus({
-          subway: "Update unavailable",
-          ferry: "Update unavailable",
-        });
         setNotice("Transit update unavailable. Retrying shortly.");
       } finally {
         busy = false;
@@ -864,43 +839,6 @@ export function TransitMap({
             <Icon name="reset" size={12} />
             Reset view
           </button>
-          <div className="divider" />
-          <div className="eyebrow">Real-time data</div>
-          <div className="setting-row">
-            <label htmlFor={settingsId + "-subway"}>
-              Subways<small>{status.subway}</small>
-            </label>
-            <Toggle
-              id={settingsId + "-subway"}
-              checked={subway}
-              onChange={(value) => changeSetting("subwayLive", value)}
-            />
-          </div>
-          <div className="setting-row">
-            <label htmlFor={settingsId + "-ferry"}>
-              Ferries<small>{status.ferry}</small>
-            </label>
-            <Toggle
-              id={settingsId + "-ferry"}
-              checked={ferry}
-              onChange={(value) => changeSetting("ferryLive", value)}
-            />
-          </div>
-          <p className="note">
-            By default, movement follows typical weekly timetables. Holidays use
-            their usual weekday. Live subway
-            locations are estimated from arrival predictions. Ferry GPS is used
-            when provided by the host.
-          </p>
-          <div className="divider" />
-          <div className="eyebrow">Troubleshooting</div>
-          <button className="reset" type="button" onClick={downloadDiagnostics}>
-            Download map diagnostics
-          </button>
-          <p className="note">
-            If the basemap disappears, download diagnostics before reloading or
-            panning.
-          </p>
           <div className="divider" />
           <p className="note">
             Times are in New York local time.
