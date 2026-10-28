@@ -13,7 +13,7 @@ Initial rendering and Reset view fit this same bounding box into the component's
 
 Padding is 55 pixels on containers at least 600 pixels wide. Smaller containers use top 66, bottom 50, left 28 and right 28. Initial fitting is immediate; Reset view animates for 700 milliseconds. A ResizeObserver updates renderer dimensions when the host container changes size without resetting a user's camera.
 
-The optional Leaflet renderer fits the same box. Its adapter approximates asymmetric padding using left/top padding on both sides. Settings `allowPanning` and `allowZooming` enable interactions independently; both default to false.
+The optional Leaflet renderer fits the same box. Its adapter approximates asymmetric padding using left/top padding on both sides. Settings `allowPanning` and `allowZooming` enable interactions independently; both default to true.
 
 The startup center `[-73.986, 40.733]` and zoom 11 are immediately replaced by the bounding-box fit. Static backdrops under `public/map/` are separate images; changing camera bounds does not regenerate them.
 

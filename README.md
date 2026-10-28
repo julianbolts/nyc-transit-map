@@ -21,7 +21,6 @@ export function TransitContainer({ schedules }: { schedules: TransitSchedules })
         assetBaseUrl="/transit/"
         workerUrl={workerUrl}
         showSettings={false}
-        defaultSettings={{ allowPanning: true, allowZooming: true }}
       />
     </div>
   );
@@ -86,14 +85,14 @@ The root exports `TransitMap`, `DEFAULT_SETTINGS`, `TransitMapProps`, `TransitMa
 
 ```ts
 const settings: TransitMapSettings = {
-  allowPanning: false,
-  allowZooming: false,
+  allowPanning: true,
+  allowZooming: true,
   subwayLive: false,
   ferryLive: false,
 };
 ```
 
-All four defaults are `false`. Settings remain effective when the gear is hidden. To control them from your app:
+Panning and zooming default to `true`; live subway and ferry data default to `false`. Settings remain effective when the gear is hidden. To control them from your app:
 
 ```tsx
 const [settings, setSettings] = useState({ ...DEFAULT_SETTINGS });
