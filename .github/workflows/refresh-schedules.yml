@@ -1,8 +1,8 @@
 name: Refresh schedule snapshots
 on:
   schedule:
-    # 06:15 UTC is 01:15 EST / 02:15 EDT: after New York midnight year-round.
-    - cron: '15 6 * * *'
+    # First of each month, 06:15 UTC (01:15 EST / 02:15 EDT).
+    - cron: '15 6 1 * *'
   workflow_dispatch:
 permissions:
   contents: write
@@ -24,11 +24,11 @@ jobs:
       - run: npm ci
       - run: npm run refresh:schedules
       - run: npm run typecheck && npm test && npm run build
-      - name: Commit validated snapshots
+      - name: Commit validated monthly templates
         run: |
           if git diff --quiet -- public/data; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add public/data/subway-schedule.json public/data/ferry-schedule.json public/data/route-meta.json
-          git commit -m 'Refresh transit schedule snapshots'
+          git add public/data/subway-schedule.json public/data/ferry-schedule.json public/data/route-meta.json public/data/transit-bundle.json
+          git commit -m 'Refresh monthly transit templates'
           git push

@@ -1,9 +1,13 @@
 import type { CSSProperties } from "react";
 import type { ScheduleData } from "./schedule";
 import type { Vehicle } from "./transit-geometry";
+import type { Network } from "./transit-geometry";
 
 export type TransitMode = "subway" | "ferry";
-export type TransitSchedules = Record<TransitMode, ScheduleData>;
+export type TransitSchedules = Record<TransitMode, ScheduleData> & {
+  /** A single fetched bundle keeps geometry, metadata and schedules on the same revision. */
+  assets?: { version: string; network: Network; metadata: RouteMetadata };
+};
 /** Omit a mode for schedule fallback; [] means the host reports no live vehicles. */
 export type LiveVehicles = Partial<Record<TransitMode, readonly Vehicle[]>>;
 export interface TransitMapSettings {

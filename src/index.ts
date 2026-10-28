@@ -9,5 +9,10 @@ export type {
   RouteMetadata,
   MapRenderer,
 } from "./types";
-export type { ScheduleData } from "./schedule";
+export type {
+  ScheduleData,
+  DatedScheduleData,
+  WeeklyScheduleData,
+  WeekVariants,
+} from "./schedule";
 export type { Vehicle, Stop, Point } from "./transit-geometry";

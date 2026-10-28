@@ -57,7 +57,7 @@ const formatTime = (time: number) =>
 function scheduleHTML(v: Vehicle, now: number) {
   let next = v.stops.findIndex((s) => s.departure > now);
   if (next < 0) next = v.stops.length - 1;
-  return `<section class="schedule" aria-label="Journey schedule"><header class="schedule-head"><span class="eyebrow">${v.mode === "ferry" ? "NYC FERRY" : "SUBWAY"} · ${escape(v.route)}</span><button class="close" aria-label="Close schedule">×</button><h2>To ${escape(v.headsign)}</h2><p>${v.live ? (v.gps ? "Live GPS · matched to ferry route" : "Live arrivals · estimated position") : "Scheduled journey · estimated position"}</p></header><div class="stops">${v.stops.map((s, i) => `<div class="stop ${i < next ? "past" : i === next ? "next" : ""}"><time>${formatTime(s.arrival)}</time><span class="pin"></span><div>${escape(s.name)}${i === next ? "<small>" + (now >= s.arrival ? "At station" : "Approaching") + "</small>" : ""}</div></div>`).join("")}</div></section>`;
+  return `<section class="schedule" aria-label="Journey schedule"><header class="schedule-head"><span class="eyebrow">${v.mode === "ferry" ? "NYC FERRY" : "SUBWAY"} · ${escape(v.route)}</span><button class="close" aria-label="Close schedule">×</button><h2>To ${escape(v.headsign)}</h2><p>${v.live ? (v.gps ? "Live GPS · matched to ferry route" : "Live arrivals · estimated position") : v.typical ? "Typical schedule · estimated position" : "Scheduled journey · estimated position"}</p></header><div class="stops">${v.stops.map((s, i) => `<div class="stop ${i < next ? "past" : i === next ? "next" : ""}"><time>${formatTime(s.arrival)}</time><span class="pin"></span><div>${escape(s.name)}${i === next ? "<small>" + (now >= s.arrival ? "At station" : "Approaching") + "</small>" : ""}</div></div>`).join("")}</div></section>`;
 }
 export function TransitMap({
   schedules,
@@ -95,13 +95,12 @@ export function TransitMap({
       ? { top: 66, bottom: 50, left: 28, right: 28 }
       : 55;
   const schedule = schedules;
-  const downloaded = new Date(
-    schedules.subway.sources.subway?.downloaded ?? schedules.subway.date,
-  ).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  const imported = (mode: "subway" | "ferry") => {
+    const data = schedules[mode];
+    return new Date(data.sources[mode]?.downloaded ??
+      (data.kind === "weekly-template" ? data.generatedAt : data.date))
+      .toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", year: "numeric" });
+  };
 
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<GLMap | null>(null);
@@ -484,10 +483,13 @@ export function TransitMap({
   }, [loaded, mapVersion]);
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
+    setGeometryReady(false);
+    const bundled = schedules.assets;
+    const assets = bundled ? Promise.resolve([bundled.network, bundled.metadata] as const) : Promise.all([
       cachedJSON<any>(asset("data/network.json"), 86400 * 30),
       cachedJSON<RouteMetadata>(asset("data/route-meta.json"), 86400 * 30),
-    ])
+    ]);
+    assets
       .then(([network, metadata]) => {
         if (cancelled) return;
         shapes.current = decodeNetwork(network);
@@ -500,7 +502,7 @@ export function TransitMap({
     return () => {
       cancelled = true;
     };
-  }, [assetBaseUrl]);
+  }, [assetBaseUrl, schedules.assets]);
   useEffect(() => {
     if (!loaded || !geometryReady || !map.current) return;
     const instance = map.current;
@@ -795,9 +797,14 @@ export function TransitMap({
     }
     update();
     const timer = setInterval(update, 30000);
+    const onResume = () => { if (!document.hidden) void update(); };
+    window.addEventListener("focus", onResume);
+    document.addEventListener("visibilitychange", onResume);
     return () => {
       cancelled = true;
       clearInterval(timer);
+      window.removeEventListener("focus", onResume);
+      document.removeEventListener("visibilitychange", onResume);
     };
   }, [
     loaded,
@@ -880,7 +887,8 @@ export function TransitMap({
             />
           </div>
           <p className="note">
-            By default, movement follows published timetables. Live subway
+            By default, movement follows typical weekly timetables. Holidays use
+            their usual weekday. Live subway
             locations are estimated from arrival predictions. Ferry GPS is used
             when provided by the host.
           </p>
@@ -897,7 +905,8 @@ export function TransitMap({
           <p className="note">
             Times are in New York local time.
             <br />
-            Schedules imported {downloaded}.<br />
+            Subway imported {imported("subway")}.<br />
+            Ferry imported {imported("ferry")}.<br />
             <a
               href="https://www.mta.info/developers"
               target="_blank"

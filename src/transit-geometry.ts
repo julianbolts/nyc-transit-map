@@ -18,6 +18,7 @@ export type Vehicle = {
   shape: string;
   stops: Stop[];
   live: boolean;
+  typical?: boolean;
   gps?: Point;
 };
 export type Segment = {
